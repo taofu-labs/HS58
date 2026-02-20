@@ -88,12 +88,13 @@ This is a NON-STANDARD provider. It sells VPN leases, not LLM chat. Read these d
 ## Available Models
 
 - tpn/wireguard — WireGuard VPN tunnel (returns .conf config)
+- tpn/socks5 — SOCKS5 Proxy (returns proxy host, port, username, password)
 
 ## How to Use
 
 1. Open a payment channel: drain_open_channel to provider
 2. Call drain_chat with:
-   - model: "tpn/wireguard"
+   - model: "tpn/wireguard" OR "tpn/socks5"
    - messages: ONE user message containing a JSON object (NOT natural language)
 
 ## Lease Parameters (JSON in user message content)
@@ -113,6 +114,13 @@ drain_chat parameters:
   model: "tpn/wireguard"
   messages: [{"role": "user", "content": "{\\"minutes\\": 60, \\"country\\": \\"US\\"}"}]
 
+### SOCKS5 Proxy for 1 hour
+
+drain_chat parameters:
+  channelId: (your channel)
+  model: "tpn/socks5"
+  messages: [{"role": "user", "content": "{\\"minutes\\": 60}"}]
+
 ### Minimal request (any country, 1 hour, datacenter)
 
 drain_chat parameters:
@@ -122,8 +130,9 @@ drain_chat parameters:
 
 ## Response Format
 
-The assistant message content is a JSON object:
+The assistant message content is a JSON object. The format depends on the requested model.
 
+### For tpn/wireguard:
 {
   "type": "wireguard",
   "vpn_config": "[Interface]\\nAddress = 10.13.13.29/32\\nPrivateKey = ...\\nListenPort = 51820\\nDNS = 10.13.13.1\\n\\n[Peer]\\nPublicKey = ...\\nPresharedKey = ...\\nAllowedIPs = 0.0.0.0/0\\nEndpoint = 1.2.3.4:51820",
@@ -132,9 +141,21 @@ The assistant message content is a JSON object:
   "connection_type": "any",
   "country": "US"
 }
+**Instructions:** The \`vpn_config\` field contains the ready-to-use WireGuard .conf file content (newlines as \\n). Save it as a \`.conf\` file or import the fields into your WireGuard client.
 
-The vpn_config field contains the ready-to-use WireGuard .conf file content (newlines as \\n).
-Save it as a .conf file or parse the fields to configure a WireGuard client.
+### For tpn/socks5:
+{
+  "type": "socks5",
+  "proxy_host": "1.2.3.4",
+  "proxy_port": 1080,
+  "username": "user123",
+  "password": "password123",
+  "minutes": 60,
+  "expires_at": "2026-02-19T22:00:00.000Z",
+  "connection_type": "any",
+  "country": "US"
+}
+**Instructions:** Use the provided credentials to route your browser or terminal traffic through the SOCKS5 proxy using \`curl -x socks5h://user:pass@host:port\` or configure your proxy extension/client accordingly.
 
 ## Pricing
 
@@ -228,15 +249,43 @@ app.post('/v1/chat/completions', async (req, res) => {
       ...leaseParams,
       minutes,
     });
+    console.log('[debug] TPN API Response:', tpnResponse);
 
-    const content = JSON.stringify({
+    const baseResponse = {
       type: tpnResponse.type,
-      vpn_config: tpnResponse.vpnConfig,
       minutes: tpnResponse.minutes,
       expires_at: tpnResponse.expiresAt,
       connection_type: tpnResponse.connection_type,
       country: leaseParams.country ?? 'any',
-    }, null, 2);
+    };
+
+    let proxyCredentials = {};
+    if (leaseType === 'socks5' && tpnResponse.vpnConfig) {
+      try {
+        // Parse socks5://username:password@host:port format
+        const url = new URL(tpnResponse.vpnConfig);
+        proxyCredentials = {
+          proxy_host: url.hostname,
+          proxy_port: parseInt(url.port, 10),
+          username: url.username,
+          password: url.password,
+        };
+      } catch (err) {
+        console.error('Failed to parse SOCKS URL:', err);
+      }
+    }
+
+    const contentObj = leaseType === 'socks5'
+      ? {
+        ...baseResponse,
+        ...proxyCredentials,
+      }
+      : {
+        ...baseResponse,
+        vpn_config: tpnResponse.vpnConfig,
+      };
+
+    const content = JSON.stringify(contentObj, null, 2);
 
     drainService.storeVoucher(voucher, validation.channel!, cost);
 

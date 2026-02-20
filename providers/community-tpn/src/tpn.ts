@@ -29,7 +29,9 @@ export class TpnService {
       body.country = params.country;
     }
 
-    const res = await fetch(`${this.baseUrl}/api/v1/vpn/generate`, {
+    const endpoint = type === 'socks5' ? '/api/v1/proxy/generate' : '/api/v1/vpn/generate';
+
+    const res = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
