@@ -187,7 +187,7 @@ app.post('/v1/chat/completions', async (req, res) => {
 
   if (!lastUserMsg?.content) {
     res.status(400).json({
-      error: { message: 'No user message found. Send lease parameters as JSON in the user message.' },
+      error: { message: 'This is a non-LLM VPN provider — plain text messages are not supported. Send lease parameters as JSON. Read the docs: GET /v1/docs' },
     });
     return;
   }
@@ -198,8 +198,8 @@ app.post('/v1/chat/completions', async (req, res) => {
   } catch {
     res.status(400).json({
       error: {
-        message: 'User message must be valid JSON with lease parameters. ' +
-          'Example: {"minutes": 60, "country": "US", "residential": false}',
+        message: 'This is a non-LLM VPN provider — plain text messages are not supported. ' +
+          'Send valid JSON: {"minutes": 60, "country": "US"}. Read the docs: GET /v1/docs',
       },
     });
     return;

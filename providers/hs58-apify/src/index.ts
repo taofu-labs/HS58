@@ -170,7 +170,7 @@ app.post('/v1/chat/completions', async (req, res) => {
 
   if (!lastUserMsg?.content) {
     res.status(400).json({
-      error: { message: 'No user message found. Send actor input as JSON in the user message.' },
+      error: { message: 'This is a non-LLM provider. Send actor input as JSON in the user message. Read the docs first: GET /v1/docs' },
     });
     return;
   }
@@ -181,8 +181,8 @@ app.post('/v1/chat/completions', async (req, res) => {
   } catch {
     res.status(400).json({
       error: {
-        message: 'User message must be valid JSON (the Actor input). ' +
-          `Example for ${modelId}: Check the Actor's input schema at https://apify.com/${modelId}`,
+        message: 'This is a non-LLM provider — plain text messages are not supported. ' +
+          `Send valid JSON (the Actor input). Read the docs: GET /v1/docs`,
       },
     });
     return;

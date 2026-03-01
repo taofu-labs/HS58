@@ -247,7 +247,7 @@ app.post('/v1/chat/completions', async (req, res) => {
 
   if (!lastUserMsg?.content) {
     res.status(400).json({
-      error: { message: 'No user message found. Send query as JSON: {"endpoint": "metagraph/latest", "params": {"netuid": 58}}' },
+      error: { message: 'This is a non-LLM data provider — plain text messages are not supported. Send query as JSON. Read the docs: GET /v1/docs' },
     });
     return;
   }
@@ -257,7 +257,7 @@ app.post('/v1/chat/completions', async (req, res) => {
     queryReq = JSON.parse(lastUserMsg.content);
   } catch {
     res.status(400).json({
-      error: { message: 'User message must be valid JSON. Example: {"endpoint": "metagraph/latest", "params": {"netuid": 58}}' },
+      error: { message: 'This is a non-LLM data provider — plain text messages are not supported. Send valid JSON: {"endpoint": "metagraph/latest", "params": {"netuid": 58}}. Read the docs: GET /v1/docs' },
     });
     return;
   }

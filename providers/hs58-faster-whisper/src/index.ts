@@ -231,7 +231,7 @@ app.post('/v1/chat/completions', async (req, res) => {
   if (!lastUserMsg?.content) {
     res.status(400).json({
       error: {
-        message: 'Missing user message. Send a JSON object with "url" field: {"url": "https://example.com/audio.mp3"}',
+        message: 'This is a non-LLM audio provider — plain text messages are not supported. Send a JSON object with "url" field. Read the docs: GET /v1/docs',
         type: 'invalid_request_error',
         code: 'missing_input',
       },
@@ -245,7 +245,7 @@ app.post('/v1/chat/completions', async (req, res) => {
   } catch {
     res.status(400).json({
       error: {
-        message: 'User message must be a JSON object: {"url": "https://example.com/audio.mp3", "language": "en"}',
+        message: 'This is a non-LLM audio provider — plain text messages are not supported. Send valid JSON: {"url": "https://example.com/audio.mp3"}. Read the docs: GET /v1/docs',
         type: 'invalid_request_error',
         code: 'invalid_json',
       },
