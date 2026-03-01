@@ -103,3 +103,15 @@ export const DRAIN_CHANNEL_ABI = [
 export const PERMANENT_CLAIM_ERRORS = [
   'InvalidAmount', 'ChannelNotFound', 'InvalidSignature', 'NotProvider', 'NotExpired',
 ] as const;
+
+export function getPaymentHeaders(providerAddress: string, chainId: number) {
+  return {
+    'X-DRAIN-Error': 'voucher_required',
+    'X-Payment-Protocol': 'drain-v2',
+    'X-Payment-Provider': providerAddress,
+    'X-Payment-Contract': DRAIN_ADDRESSES[chainId],
+    'X-Payment-Chain': String(chainId),
+    'X-Payment-Signing': 'https://handshake58.com/api/drain/signing',
+    'X-Payment-Docs': '/v1/docs',
+  };
+}

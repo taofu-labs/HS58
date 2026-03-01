@@ -10,6 +10,7 @@ import cors from 'cors';
 import { loadConfig, getRequestCost, isEndpointAllowed, getAllowedEndpoints } from './config.js';
 import { DrainService } from './drain.js';
 import { VoucherStorage } from './storage.js';
+import { getPaymentHeaders } from './constants.js';
 import { TaostatsService } from './taostats.js';
 import { formatUnits } from 'viem';
 import type { QueryRequest } from './types.js';
@@ -226,7 +227,7 @@ drain_chat parameters:
 app.post('/v1/chat/completions', async (req, res) => {
   const voucherHeader = req.headers['x-drain-voucher'] as string;
   if (!voucherHeader) {
-    res.status(402).json({ error: { message: 'Payment required. Include X-DRAIN-Voucher header.' } });
+    res.status(402).set(getPaymentHeaders(drainService.getProviderAddress(), config.chainId)).json({ error: { message: 'Payment required. Include X-DRAIN-Voucher header.' } });
     return;
   }
 

@@ -10,6 +10,7 @@ import FormData from 'form-data';
 import { loadConfig, calculateCost, getModelPricing, isModelSupported, getSupportedModels, loadModels } from './config.js';
 import { DrainService } from './drain.js';
 import { VoucherStorage } from './storage.js';
+import { getPaymentHeaders } from './constants.js';
 import { formatUnits } from 'viem';
 import type { TranscriptionResult } from './types.js';
 
@@ -202,7 +203,7 @@ app.post('/v1/chat/completions', async (req, res) => {
   const voucherHeader = req.headers['x-drain-voucher'] as string | undefined;
 
   if (!voucherHeader) {
-    res.status(402).set({ 'X-DRAIN-Error': 'voucher_required' }).json({
+    res.status(402).set(getPaymentHeaders(drainService.getProviderAddress(), config.chainId)).json({
       error: {
         message: 'X-DRAIN-Voucher header required',
         type: 'payment_required',
@@ -457,7 +458,7 @@ app.post('/v1/audio/transcriptions', upload.single('file'), async (req, res) => 
   const voucherHeader = req.headers['x-drain-voucher'] as string | undefined;
 
   if (!voucherHeader) {
-    res.status(402).set({ 'X-DRAIN-Error': 'voucher_required' }).json({
+    res.status(402).set(getPaymentHeaders(drainService.getProviderAddress(), config.chainId)).json({
       error: {
         message: 'X-DRAIN-Voucher header required',
         type: 'payment_required',

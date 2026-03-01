@@ -10,6 +10,7 @@ import OpenAI from 'openai';
 import { loadConfig, calculateCost, getModelPricing, isModelSupported, getSupportedModels, loadModels } from './config.js';
 import { DrainService } from './drain.js';
 import { VoucherStorage } from './storage.js';
+import { getPaymentHeaders } from './constants.js';
 import { formatUnits } from 'viem';
 
 // Load configuration
@@ -29,6 +30,11 @@ const client = new OpenAI({
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.get('/v1/docs', (req, res) => {
+  const models = getSupportedModels();
+  res.type('text/plain').send(`# ${config.providerName}\n\nStandard OpenAI-compatible chat completions API. Payment via DRAIN protocol.\n\n## Request Format\n\nPOST /v1/chat/completions\nHeader: X-DRAIN-Voucher (required)\n\n{\n  "model": "<model-id>",\n  "messages": [{"role": "user", "content": "Your message"}],\n  "stream": false\n}\n\n## Available Models (${models.length})\n\n${models.join('\\n')}\n\n## Pricing\n\nGET /v1/pricing for per-model token pricing.\n`);
+});
 
 /**
  * GET /v1/pricing
@@ -85,9 +91,7 @@ app.post('/v1/chat/completions', async (req, res) => {
   
   // 1. Check voucher header present
   if (!voucherHeader) {
-    res.status(402).set({
-      'X-DRAIN-Error': 'voucher_required',
-    }).json({
+    res.status(402).set(getPaymentHeaders(drainService.getProviderAddress(), config.chainId)).json({
       error: {
         message: 'X-DRAIN-Voucher header required',
         type: 'payment_required',
