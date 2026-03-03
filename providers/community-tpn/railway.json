@@ -5,11 +5,6 @@
   },
   "deploy": {
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10,
-    "healthCheckPath": "/health",
-    "healthCheckTimeout": 5,
-    "volumes": {
-      "/app/data": "provider-data"
-    }
+    "restartPolicyMaxRetries": 10
   }
 }
