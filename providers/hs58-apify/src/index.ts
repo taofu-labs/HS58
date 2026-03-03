@@ -11,6 +11,7 @@ import cors from 'cors';
 import { loadConfig, loadModels, getModelPricing, isModelSupported, getSupportedModels, getActor, getAllActors } from './config.js';
 import { DrainService } from './drain.js';
 import { VoucherStorage } from './storage.js';
+import { getPaymentHeaders } from './constants.js';
 import { ApifyService } from './apify.js';
 import { formatUnits } from 'viem';
 
@@ -123,7 +124,7 @@ app.post('/v1/chat/completions', async (req, res) => {
   // 1. Require voucher
   const voucherHeader = req.headers['x-drain-voucher'] as string;
   if (!voucherHeader) {
-    res.status(402).json({
+    res.status(402).set(getPaymentHeaders(drainService.getProviderAddress(), config.chainId)).json({
       error: { message: 'Payment required. Include X-DRAIN-Voucher header.' },
     });
     return;
@@ -170,7 +171,7 @@ app.post('/v1/chat/completions', async (req, res) => {
 
   if (!lastUserMsg?.content) {
     res.status(400).json({
-      error: { message: 'No user message found. Send actor input as JSON in the user message.' },
+      error: { message: 'This is a non-LLM provider. Send actor input as JSON in the user message. Read the docs first: GET /v1/docs' },
     });
     return;
   }
@@ -181,8 +182,8 @@ app.post('/v1/chat/completions', async (req, res) => {
   } catch {
     res.status(400).json({
       error: {
-        message: 'User message must be valid JSON (the Actor input). ' +
-          `Example for ${modelId}: Check the Actor's input schema at https://apify.com/${modelId}`,
+        message: 'This is a non-LLM provider — plain text messages are not supported. ' +
+          `Send valid JSON (the Actor input). Read the docs: GET /v1/docs`,
       },
     });
     return;
@@ -324,6 +325,23 @@ app.post('/v1/admin/refresh-actors', async (_req, res) => {
     res.json({ refreshed: true, actorsLoaded: actors.size });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/v1/close-channel', async (req, res) => {
+  try {
+    const { channelId } = req.body;
+    if (!channelId) return res.status(400).json({ error: 'channelId required' });
+
+    const result = await drainService.signCloseAuthorization(channelId);
+    res.json({
+      channelId,
+      finalAmount: result.finalAmount.toString(),
+      signature: result.signature,
+    });
+  } catch (error: any) {
+    console.error('[close-channel] Error:', error?.message || error);
+    res.status(500).json({ error: 'internal_error' });
   }
 });
 

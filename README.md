@@ -66,6 +66,12 @@ Ready-to-deploy provider templates for popular AI backends:
 | [`hs58-openrouter`](providers/hs58-openrouter) | OpenRouter | 200+ models |
 | [`hs58-chutes`](providers/hs58-chutes) | Chutes | Bittensor inference models |
 | [`hs58-custom`](providers/hs58-custom) | **Any** | Ollama, vLLM, Together, Fireworks, LiteLLM, etc. |
+| [`hs58-apify`](providers/hs58-apify) | Apify | Web scraping, data extraction, automation |
+| [`hs58-numinous`](providers/hs58-numinous) | Numinous | Probabilistic forecasting agents |
+| [`hs58-replicate`](providers/hs58-replicate) | Replicate | 300+ models: image, video, audio, LLM, 3D |
+| [`hs58-faster-whisper`](providers/hs58-faster-whisper) | Faster Whisper | Speech-to-text transcription |
+| [`community-tpn`](providers/community-tpn) | TPN/WireGuard | VPN leases |
+| [`community-taostats`](providers/community-taostats) | Taostats | Bittensor analytics API |
 
 Each template includes:
 - Full DRAIN voucher validation (EIP-712 signatures)
@@ -173,7 +179,7 @@ cast wallet new
 node -e "const w = require('ethers').Wallet.createRandom(); console.log('Address:', w.address, '\nPrivate Key:', w.privateKey)"
 ```
 
-> **Important:** Fund your wallet with a small amount of MATIC for gas (~$0.01 is enough). You can bridge from any chain or buy on an exchange.
+> **Important:** Fund your wallet with a small amount of POL for gas (~$0.01 is enough). You can bridge from any chain or buy on an exchange.
 
 ### Bittensor Wallet (for Miners/Validators)
 
@@ -249,22 +255,37 @@ npm install -g drain-mcp
 }
 ```
 
+The MCP server provides 10 tools: `drain_providers`, `drain_provider_info`, `drain_balance`, `drain_approve`, `drain_open_channel`, `drain_chat`, `drain_channel_status`, `drain_channels`, `drain_close_channel`, `drain_cooperative_close`.
+
+**Provider categories:** `llm`, `image`, `audio`, `code`, `scraping`, `vpn`, `multi-modal`, `other`. For non-LLM providers, read docs via `drain_provider_info` before sending requests.
+
 ### API Discovery
 
 ```bash
 # All providers
 GET https://handshake58.com/api/mcp/providers
 
-# Smart filters
-GET https://handshake58.com/api/mcp/providers?model=gpt-4o&tier=bittensor&limit=3&format=compact
+# Filter by category or model
+GET https://handshake58.com/api/mcp/providers?model=gpt-4o&category=scraping&limit=3&format=compact
 ```
 
-**Filters:** `model`, `tier` (bittensor/community), `minScore`, `limit`, `format` (compact/full)
+**Filters:** `model`, `category`, `tier` (bittensor/community), `minScore`, `limit`, `format` (compact/full)
+
+### Custom Implementations (without drain-mcp)
+
+If your agent can't install npm packages, use the REST API directly:
+
+```bash
+# Get EIP-712 signing parameters, voucher types, and provider endpoints
+GET https://handshake58.com/api/drain/signing
+```
 
 ### Agent Documentation
 
-- [Agent Quick Start](https://handshake58.com/agent.md)
-- [MCP Skill File](https://handshake58.com/skill.md)
+- [Full Protocol Docs (SKILL.md)](https://handshake58.com/skill.md)
+- [Quick Reference (llms.txt)](https://handshake58.com/llms.txt)
+- [Signing API](https://handshake58.com/api/drain/signing)
+- [MCP Skill File (drain-mcp)](drain-mcp/SKILL.md)
 
 ---
 
@@ -272,10 +293,10 @@ GET https://handshake58.com/api/mcp/providers?model=gpt-4o&tier=bittensor&limit=
 
 | Contract | Address | Network |
 |----------|---------|---------|
-| DRAIN Channel | `0x1C1918C99b6DcE977392E4131C91654d8aB71e64` | Polygon Mainnet |
+| DRAIN Channel V2 | `0x0C2B3aA1e80629D572b1f200e6DF3586B3946A8A` | Polygon Mainnet |
 | USDC | `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` | Polygon Mainnet |
 
-[View on Polygonscan](https://polygonscan.com/address/0x1C1918C99b6DcE977392E4131C91654d8aB71e64)
+[View on Polygonscan](https://polygonscan.com/address/0x0C2B3aA1e80629D572b1f200e6DF3586B3946A8A)
 
 ---
 
@@ -291,7 +312,7 @@ GET https://handshake58.com/api/mcp/providers?model=gpt-4o&tier=bittensor&limit=
 
 ## Pricing
 
-- **Protocol fee:** 0% on payments
+- **Protocol fee:** 2% on provider claims (on-chain, deducted automatically)
 - **Gas cost:** ~$0.02 per channel open/claim on Polygon
 - **Provider markup:** Set by each provider (typically 20-50% on upstream costs)
 

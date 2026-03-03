@@ -20,6 +20,7 @@ import {
 } from './config.js';
 import { DrainService } from './drain.js';
 import { VoucherStorage } from './storage.js';
+import { getPaymentHeaders } from './constants.js';
 import { formatUnits } from 'viem';
 
 // Load configuration
@@ -39,6 +40,45 @@ const chutes = new OpenAI({
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+/**
+ * GET /v1/docs
+ * Usage documentation for agents
+ */
+app.get('/v1/docs', (req, res) => {
+  const models = getSupportedModels();
+  res.type('text/plain').send(`# ${config.providerName}
+
+Standard OpenAI-compatible chat completions API. Payment via DRAIN protocol.
+
+## Request Format
+
+POST /v1/chat/completions
+Header: X-DRAIN-Voucher (required)
+
+{
+  "model": "<model-id>",
+  "messages": [{"role": "user", "content": "Your message"}],
+  "stream": false
+}
+
+## Available Models (${models.length})
+
+${models.join('\n')}
+
+## Pricing
+
+GET /v1/pricing for per-model token pricing.
+
+## Endpoints
+
+GET  /v1/docs              - This documentation
+GET  /v1/models            - List models
+GET  /v1/pricing            - Token pricing
+POST /v1/chat/completions  - Chat (requires X-DRAIN-Voucher)
+POST /v1/close-channel     - Cooperative close
+`);
+});
 
 /**
  * GET /v1/pricing
@@ -127,9 +167,7 @@ app.post('/v1/chat/completions', async (req, res) => {
   
   // 1. Check voucher header present
   if (!voucherHeader) {
-    res.status(402).set({
-      'X-DRAIN-Error': 'voucher_required',
-    }).json({
+    res.status(402).set(getPaymentHeaders(drainService.getProviderAddress(), config.chainId)).json({
       error: {
         message: 'X-DRAIN-Voucher header required',
         type: 'payment_required',
@@ -363,6 +401,23 @@ app.get('/v1/admin/vouchers', (req, res) => {
       receivedAt: new Date(voucher.receivedAt).toISOString(),
     })),
   });
+});
+
+app.post('/v1/close-channel', async (req, res) => {
+  try {
+    const { channelId } = req.body;
+    if (!channelId) return res.status(400).json({ error: 'channelId required' });
+
+    const result = await drainService.signCloseAuthorization(channelId);
+    res.json({
+      channelId,
+      finalAmount: result.finalAmount.toString(),
+      signature: result.signature,
+    });
+  } catch (error: any) {
+    console.error('[close-channel] Error:', error?.message || error);
+    res.status(500).json({ error: 'internal_error' });
+  }
 });
 
 /**
