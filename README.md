@@ -68,6 +68,7 @@ Ready-to-deploy provider templates for popular AI backends:
 | [`hs58-custom`](providers/hs58-custom) | **Any** | Ollama, vLLM, Together, Fireworks, LiteLLM, etc. |
 | [`hs58-apify`](providers/hs58-apify) | Apify | Web scraping, data extraction, automation |
 | [`hs58-numinous`](providers/hs58-numinous) | Numinous | Probabilistic forecasting agents |
+| [`hs58-replicate`](providers/hs58-replicate) | Replicate | 300+ models: image, video, audio, LLM, 3D |
 | [`hs58-faster-whisper`](providers/hs58-faster-whisper) | Faster Whisper | Speech-to-text transcription |
 | [`community-tpn`](providers/community-tpn) | TPN/WireGuard | VPN leases |
 | [`community-taostats`](providers/community-taostats) | Taostats | Bittensor analytics API |
