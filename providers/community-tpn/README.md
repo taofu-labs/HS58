@@ -98,10 +98,12 @@ messages: [{"role": "user", "content": "{\"minutes\": 60, \"country\": \"US\"}"}
 
 ### Railway
 
-```bash
-npm run build
-# Deploy via Railway CLI or connect GitHub repo
-```
+1. **Volume Setup (CRITICAL):** In your Railway project, navigate to this service's settings, go to the **Volumes** tab, and create a new volume named `provider-data` mounted at `/app/data`. *This ensures your `vouchers.json` and DRAIN earnings are not lost on redeployment.*
+2. **Deploy:**
+   ```bash
+   npm run build
+   # Deploy via Railway CLI or connect GitHub repo
+   ```
 
 ### VPS
 
